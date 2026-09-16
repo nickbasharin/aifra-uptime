@@ -1,0 +1,33 @@
+name: Public uptime
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-uptime
+  cancel-in-progress: false
+
+jobs:
+  probe:
+    if: vars.UPTIME_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      APP_ORIGIN: ${{ vars.APP_ORIGIN }}
+      API_ORIGIN: ${{ vars.API_ORIGIN }}
+      PREVIEW_VIEWER_ORIGIN: ${{ vars.PREVIEW_VIEWER_ORIGIN }}
+      SMTP_HOST: ${{ vars.SMTP_HOST }}
+      SMTP_PORT: '465'
+      SMTP_USER: ${{ vars.SMTP_USER }}
+      SMTP_FROM: ${{ vars.SMTP_FROM }}
+      SMTP_TO: ${{ vars.SMTP_TO }}
+      SMTP_PASSWORD: ${{ secrets.UPTIME_SMTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Check public HTTPS and notify on failure
+        run: python3 operations-monitor.py --mode external
