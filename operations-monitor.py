@@ -134,9 +134,10 @@ def run(config, mode, test_mail=False):
     state = json.loads(state_path.read_text()) if state_path and state_path.exists() else {}
     now = time.time()
     mailed = False
+    message_id = None
     if test_mail or should_notify(state, failures, now):
         try:
-            send_mail(config, ['test_alert'] if test_mail else failures or ['recovered'])
+            message_id = send_mail(config, ['test_alert'] if test_mail else failures or ['recovered'])
             mailed = True
         except Exception:
             return {'ok': False, 'failures': failures + ['mail_delivery_failed'], 'mailAccepted': False}
@@ -147,7 +148,10 @@ def run(config, mode, test_mail=False):
         with os.fdopen(fd, 'w') as stream:
             json.dump({'failures': failures, 'sent_at': now if mailed else state.get('sent_at', 0)}, stream)
         candidate.replace(state_path)
-    return {'ok': not failures, 'failures': failures, 'mailAccepted': mailed}
+    report = {'ok': not failures, 'failures': failures, 'mailAccepted': mailed}
+    if test_mail:
+        report['testMessageId'] = message_id
+    return report
 
 
 if __name__ == '__main__':

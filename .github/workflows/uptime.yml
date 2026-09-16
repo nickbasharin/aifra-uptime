@@ -2,6 +2,11 @@ name: Public uptime
 
 on:
   workflow_dispatch:
+    inputs:
+      test_mail:
+        description: Send one controlled test alert
+        type: boolean
+        default: false
   schedule:
     - cron: '17 * * * *'
 
@@ -27,7 +32,13 @@ jobs:
       SMTP_FROM: ${{ vars.SMTP_FROM }}
       SMTP_TO: ${{ vars.SMTP_TO }}
       SMTP_PASSWORD: ${{ secrets.UPTIME_SMTP_PASSWORD }}
+      TEST_MAIL: ${{ inputs.test_mail }}
     steps:
       - uses: actions/checkout@v6
       - name: Check public HTTPS and notify on failure
-        run: python3 operations-monitor.py --mode external
+        run: |
+          if [ "$TEST_MAIL" = "true" ]; then
+            python3 operations-monitor.py --mode external --test-mail
+          else
+            python3 operations-monitor.py --mode external
+          fi
