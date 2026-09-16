@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   probe:
-    if: vars.UPTIME_ENABLED == 'true'
+    if: github.event_name == 'workflow_dispatch' || vars.UPTIME_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
