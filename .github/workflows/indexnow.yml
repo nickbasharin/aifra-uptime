@@ -1,0 +1,33 @@
+name: Notify search engines
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_ORIGIN: ${{ vars.APP_ORIGIN }}
+      INDEXNOW_STATE: .state/indexnow.json
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: actions/cache@v4
+        with:
+          path: .state/indexnow.json
+          key: indexnow-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: indexnow-v1-
+      - name: Notify only changed indexable platform pages
+        run: node indexnow.mjs --submit
